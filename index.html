@@ -73,7 +73,7 @@ table{width:100%;border-collapse:collapse;background:#fff;font-size:12.5px}th,td
 <nav>
   <button class="tab active" data-tab="program">Haftalık Program</button>
   <button class="tab" data-tab="detail">Ayrıntılı Yoklamalarım</button>
-  <button class="tab" data-tab="summary">Özet</button><button class="tab" data-tab="manage">Program Yönetimi</button>
+  <button class="tab" data-tab="summary">Özet</button><button class="tab" data-tab="manage">Program Yönetimi</button><button class="tab" id="usersTab" data-tab="users" style="display:none">Kullanıcı Yönetimi</button>
 </nav>
 <main>
 <section id="program">
@@ -168,6 +168,23 @@ table{width:100%;border-collapse:collapse;background:#fff;font-size:12.5px}th,td
 </div>
 <div class="panel"><h2>Tanımlı Dersler</h2><div id="courseList"></div></div>
 </section>
+
+<section id="users" style="display:none">
+  <div class="panel">
+    <h2>Kullanıcı Yönetimi</h2>
+    <div class="note">Yeni kullanıcı oluşturabilir, şifre değiştirebilir, hesabı aktif/pasif yapabilir veya silebilirsin.</div>
+    <form id="userForm">
+      <div class="form-grid">
+        <label>Kullanıcı adı<input id="newUsername" required autocomplete="off"></label>
+        <label>Şifre<input id="newPassword" type="password" required autocomplete="new-password"></label>
+        <label>Yetki<select id="newRole"><option value="user">Kullanıcı</option><option value="admin">Admin</option></select></label>
+      </div>
+      <div class="form-actions"><button type="submit" class="primary-action">Kullanıcı Ekle</button><button type="button" id="refreshUsers">Listeyi Yenile</button></div>
+    </form>
+    <div id="userError" style="display:none;margin-top:10px;padding:10px;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:13px"></div>
+  </div>
+  <div class="panel"><h2>Kayıtlı Kullanıcılar</h2><div class="tablewrap"><table><thead><tr><th>Kullanıcı</th><th>Yetki</th><th>Durum</th><th>Oluşturulma</th><th>İşlemler</th></tr></thead><tbody id="usersBody"><tr><td colspan="5">Kullanıcı listesi yükleniyor...</td></tr></tbody></table></div></div>
+</section>
 </main>
 
 <div class="modalback" id="modalBack">
@@ -189,7 +206,7 @@ const DN = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma"];
 const LS="hemsirelik_3_yoklama_v3";
 const COURSE_LS="hemsirelik_3_courses_v1";
 const SESSION_KEY="hemsirelik_3_cloud_session_v1";
-const API_URL="/api"; // Gerçek sunucu adresi: örn. https://alanadiniz.com/api
+const API_URL="/api";
 let currentUser=null, marks={}, weekDate=new Date(START), selectedKey=null;
 function scoped(k){return k+"_"+(currentUser?currentUser.username:"guest")}
 function setSyncState(t){const e=document.getElementById("syncState");if(e)e.textContent="● "+t}
@@ -403,10 +420,14 @@ document.getElementById("next").onclick=()=>{let x=new Date(weekDate);x.setDate(
 document.getElementById("current").onclick=()=>{weekDate=new Date();if(weekDate<START)weekDate=new Date(START);if(weekDate>END)weekDate=new Date(END); selectedKey=null; document.getElementById("modalBack").style.display="none"; renderWeek();}
 
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  if(b.dataset.tab==="users"&&!isAdmin())return;
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); b.classList.add("active");
-  ["program","detail","summary","manage"].forEach(id=>document.getElementById(id).style.display="none");
+  ["program","detail","summary","manage","users"].forEach(id=>document.getElementById(id).style.display="none");
   document.getElementById(b.dataset.tab).style.display="block";
-  if(b.dataset.tab==="detail")renderDetail(); if(b.dataset.tab==="summary")renderSummary();
+  if(b.dataset.tab==="detail")renderDetail();
+  if(b.dataset.tab==="summary")renderSummary();
+  if(b.dataset.tab==="manage"){renderCourseList();if(!document.getElementById("courseStart").value)resetCourseForm();}
+  if(b.dataset.tab==="users")loadUsers();
 });
 
 function allSessions(){
@@ -512,173 +533,20 @@ document.getElementById("courseForm").onsubmit=e=>{
   saveCourses();rebuildSchedule();resetCourseForm();renderCourseList();renderWeek();renderDetail();renderSummary();
 };
 document.getElementById("cancelEdit").onclick=resetCourseForm;
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
-  if(b.dataset.tab==="manage"){
-    renderCourseList();
-    if(!document.getElementById("courseStart").value){
-      resetCourseForm();
-    }
-  }
-}));
-
-async function doLogin(){
-
-  const username=document.getElementById("loginUser").value.trim();
-  const password=document.getElementById("loginPass").value;
-  const err=document.getElementById("loginError");
-
-  let ok=false;
-
-  if(API_URL){
-
-    try{
-
-      const r=await fetch(API_URL+"/login",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-          username:username,
-          password:password
-        })
-      });
-
-      if(r.ok){
-
-        const d=await r.json();
-
-        currentUser={
-          username:d.username,
-          role:d.role,
-          token:d.token
-        };
-
-        ok=true;
-      }
-
-    }catch(e){
-
-      console.error("Giriş hatası:",e);
-
-    }
-
-  }else{
-
-    if(username==="HAN01" && password==="HAN12345"){
-
-      currentUser={
-        username:"HAN01",
-        role:"admin",
-        token:"local-HAN01"
-      };
-
-      ok=true;
-    }
-  }
-
-  if(!ok){
-
-    err.textContent=API_URL
-      ?"Giriş başarısız veya sunucuya ulaşılamıyor."
-      :"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";
-
-    err.style.display="block";
-
-    return;
-  }
-
-  localStorage.setItem(
-    SESSION_KEY,
-    JSON.stringify(currentUser)
-  );
-
-  loadUserState();
-
-  document.getElementById("loginBack").style.display="none";
-
-  document.getElementById("accountUser").textContent=
-    "Kullanıcı: "+currentUser.username;
-
-  err.style.display="none";
-
-  rebuildSchedule();
-  renderWeek();
-  renderDetail();
-  renderSummary();
-  renderCourseList();
-
-  pullSync();
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.tab==="manage"){renderCourseList();if(!document.getElementById("courseStart").value)resetCourseForm()}}));
+function isAdmin(){return !!currentUser&&currentUser.role==="admin";}\nfunction apiHeaders(){return {"Content-Type":"application/json","Authorization":"Bearer "+currentUser.token};}\nfunction updateUserManagement(){const t=document.getElementById("usersTab");if(!t)return;t.style.display=isAdmin()?"":"none";}\nfunction showUserError(m){const e=document.getElementById("userError");if(e){e.textContent=m;e.style.display="block";}}\nfunction clearUserError(){const e=document.getElementById("userError");if(e){e.textContent="";e.style.display="none";}}\nfunction esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}\nasync function loadUsers(){if(!isAdmin())return;const body=document.getElementById("usersBody");body.innerHTML='<tr><td colspan="5">Kullanıcılar yükleniyor...</td></tr>';clearUserError();try{const r=await fetch(API_URL+"/users",{headers:{"Authorization":"Bearer "+currentUser.token}});const d=await r.json().catch(()=>[]);if(!r.ok)throw new Error(d.error==="admin_only"?"Admin yetkisi gerekiyor.":"Kullanıcılar alınamadı.");if(!d.length){body.innerHTML='<tr><td colspan="5">Kayıtlı kullanıcı yok.</td></tr>';return;}body.innerHTML=d.map(u=>{const active=!!u.active,date=u.created_at?new Date(u.created_at).toLocaleDateString("tr-TR"):"—";return `<tr><td><b>${esc(u.username)}</b></td><td><span class="badge ${u.role==="admin"?"b-geldi":"b-bos"}">${u.role==="admin"?"Admin":"Kullanıcı"}</span></td><td><span class="badge ${active?"b-geldi":"b-gelmedi"}">${active?"Aktif":"Pasif"}</span></td><td>${date}</td><td><button type="button" data-action="password" data-id="${u.id}" data-name="${esc(u.username)}">Şifre</button> <button type="button" data-action="active" data-id="${u.id}" data-active="${active}">${active?"Pasifleştir":"Aktifleştir"}</button> ${u.id!==currentUser.id?`<button type="button" data-action="delete" data-id="${u.id}" data-name="${esc(u.username)}">Sil</button>`:'<span class="small">Mevcut hesap</span>'}</td></tr>`;}).join("");}catch(e){body.innerHTML='<tr><td colspan="5">Kullanıcılar yüklenemedi.</td></tr>';showUserError(e.message);}}\nasync function changeUserPassword(id,name){const p=prompt(name+" için yeni şifre:");if(p===null)return;if(p.length<6){alert("Şifre en az 6 karakter olmalıdır.");return;}const r=await fetch(API_URL+"/users/"+id+"/password",{method:"POST",headers:apiHeaders(),body:JSON.stringify({password:p})});if(!r.ok){showUserError("Şifre değiştirilemedi.");return;}alert("Şifre değiştirildi.");loadUsers();}\nasync function toggleUser(id,active){if(!confirm(active?"Bu kullanıcı pasifleştirilsin mi?":"Bu kullanıcı aktifleştirilsin mi?"))return;const r=await fetch(API_URL+"/users/"+id+"/active",{method:"POST",headers:apiHeaders(),body:JSON.stringify({active:!active})});if(!r.ok){showUserError("Kullanıcı durumu değiştirilemedi.");return;}loadUsers();}\nasync function deleteUser(id,name){if(!confirm(name+" kullanıcısı ve bu kullanıcıya ait veriler silinsin mi?"))return;const r=await fetch(API_URL+"/users/"+id,{method:"DELETE",headers:apiHeaders()});const d=await r.json().catch(()=>({}));if(!r.ok){showUserError(d.error==="cannot_delete_self"?"Kendi hesabını silemezsin.":"Kullanıcı silinemedi.");return;}loadUsers();}\ndocument.getElementById("userForm").onsubmit=async e=>{e.preventDefault();clearUserError();const username=document.getElementById("newUsername").value.trim(),password=document.getElementById("newPassword").value,role=document.getElementById("newRole").value;if(!username||!password){showUserError("Kullanıcı adı ve şifre zorunludur.");return;}if(password.length<6){showUserError("Şifre en az 6 karakter olmalıdır.");return;}try{const r=await fetch(API_URL+"/users",{method:"POST",headers:apiHeaders(),body:JSON.stringify({username,password,role})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error==="username_exists"?"Bu kullanıcı adı zaten kayıtlı.":"Kullanıcı oluşturulamadı.");e.target.reset();loadUsers();}catch(err){showUserError(err.message);}};\ndocument.getElementById("usersBody").addEventListener("click",e=>{const b=e.target.closest("button[data-action]");if(!b)return;const id=Number(b.dataset.id),a=b.dataset.action;if(a==="password")changeUserPassword(id,b.dataset.name);if(a==="active")toggleUser(id,b.dataset.active==="true");if(a==="delete")deleteUser(id,b.dataset.name);});\ndocument.getElementById("refreshUsers").onclick=loadUsers;\n\nasync function doLogin(){
+ const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
+ let ok=false;
+ if(API_URL){try{const r=await fetch(API_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});if(r.ok){const d=await r.json();currentUser={id:d.userId,username:d.username,role:d.role,token:d.token};ok=true}}catch(e){}}
+ else if(username==="HAN01"&&password==="HAN12345"){currentUser={username:"HAN01",role:"admin",token:"local-HAN01"};ok=true}
+ if(!ok){err.textContent=API_URL?"Giriş başarısız veya sunucuya ulaşılamıyor.":"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";err.style.display="block";return}
+ localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username;updateUserManagement();err.style.display="none";rebuildSchedule();renderWeek();renderDetail();renderSummary();renderCourseList();pullSync()
 }
-
-
-function doLogout(){
-
-  currentUser=null;
-
-  localStorage.removeItem(SESSION_KEY);
-
-  document.getElementById("accountUser").textContent="";
-
-  document.getElementById("loginBack").style.display="flex";
-}
-
-
+function doLogout(){currentUser=null;updateUserManagement();localStorage.removeItem(SESSION_KEY);document.getElementById("accountUser").textContent="";document.getElementById("loginBack").style.display="flex"}
 document.getElementById("loginBtn").onclick=doLogin;
+document.getElementById("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+document.getElementById("logoutBtn").onclick=doLogout;document.getElementById("syncBtn").onclick=syncNow;
+window.addEventListener("online",()=>{if(currentUser)syncNow()});
+(function boot(){try{currentUser=JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){currentUser=null}if(currentUser){loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username;updateUserManagement()}else document.getElementById("loginBack").style.display="flex"}})();
 
-
-document.getElementById("loginPass").addEventListener(
-  "keydown",
-  e=>{
-    if(e.key==="Enter"){
-      doLogin();
-    }
-  }
-);
-
-
-document.getElementById("logoutBtn").onclick=doLogout;
-
-document.getElementById("syncBtn").onclick=syncNow;
-
-
-window.addEventListener("online",()=>{
-  if(currentUser){
-    syncNow();
-  }
-});
-
-
-(function boot(){
-
-  try{
-
-    currentUser=JSON.parse(
-      localStorage.getItem(SESSION_KEY)||"null"
-    );
-
-  }catch(e){
-
-    currentUser=null;
-
-  }
-
-  if(currentUser){
-
-    loadUserState();
-
-    document.getElementById("loginBack").style.display="none";
-
-    document.getElementById("accountUser").textContent=
-      "Kullanıcı: "+currentUser.username;
-
-  }else{
-
-    document.getElementById("loginBack").style.display="flex";
-
-  }
-
-})();
 </script>
-</body>
-</html>
