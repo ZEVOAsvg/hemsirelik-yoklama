@@ -550,3 +550,5 @@ window.addEventListener("online",()=>{if(currentUser)syncNow()});
 (function boot(){try{currentUser=JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){currentUser=null}if(currentUser){loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username;updateUserManagement()}else document.getElementById("loginBack").style.display="flex"}})();
 
 </script>
+</body>
+</html>
