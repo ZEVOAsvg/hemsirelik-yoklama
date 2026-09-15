@@ -250,14 +250,7 @@ const W = {
 ]};
 
 
-const DEFAULT_COURSES=[
-{id:"1",name:"Çocuk Sağlığı ve Hastalıkları Hemşireliği",type:"Teorik",room:"D1",code:"0350010068(1)",teacher:"Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK",start:"2026-09-14",end:"2027-05-28",days:["Pazartesi"],times:[["10:30","11:15"]]},
-{id:"2",name:"Pediatri",type:"Teorik",room:"",code:"PEDITR-01",teacher:"Eklenen ders",start:"2026-09-14",end:"2027-05-28",days:["Salı"],times:[["10:30","11:15"]]},
-{id:"3",name:"Kadın Doğum Staj",type:"Staj",room:"",code:"0350010059(1)",teacher:"Prof.Dr. KAMİLE ALTUNTUĞ",start:"2026-09-14",end:"2027-05-28",days:["Çarşamba"],times:[["10:30","11:15"]]},
-{id:"4",name:"Doğum ve Kadın Hastalıkları Hemşireliği",type:"Teorik",room:"D1",code:"0350010059(1)",teacher:"Prof.Dr. KAMİLE ALTUNTUĞ",start:"2026-09-14",end:"2027-05-28",days:["Perşembe"],times:[["09:30","10:15"]]},
-{id:"5",name:"Hemşirelik Tarihi ve Deontoloji",type:"Teorik",room:"D2",code:"0350010050(1)",teacher:"Doç.Dr. SERPİL SU",start:"2026-09-14",end:"2027-05-28",days:["Cuma"],times:[["08:30","09:15"],["09:30","10:15"]]},
-{id:"6",name:"Bağımlılık ve Bağımlılık ile Mücadele",type:"Teorik",room:"D2",code:"03500100232(1)",teacher:"Öğr. Gör. Dr. ZEYNEP SAÇKARA",start:"2026-09-14",end:"2027-05-28",days:["Cuma"],times:[["10:30","11:15"],["11:30","12:15"]]}
-];
+const DEFAULT_COURSES=[];
 let courses;
 try{courses=JSON.parse(localStorage.getItem(scoped(COURSE_LS))||"null")}catch(e){courses=null}
 if(!Array.isArray(courses))courses=JSON.parse(JSON.stringify(DEFAULT_COURSES));
