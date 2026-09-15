@@ -514,7 +514,8 @@ document.getElementById("courseForm").onsubmit=e=>{
 };
 document.getElementById("cancelEdit").onclick=resetCourseForm;
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.tab==="manage"){renderCourseList();if(!document.getElementById("courseStart").value)resetCourseForm()}}));
-async function doLogin(){
+async
+  async function doLogin(){
  const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
  let ok=false;
  if(API_URL){try{const r=await fetch(API_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});if(r.ok){const d=await r.json();currentUser={username:d.username,role:d.role,token:d.token};ok=true}}catch(e){}}
