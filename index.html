@@ -189,7 +189,7 @@ const DN = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma"];
 const LS="hemsirelik_3_yoklama_v3";
 const COURSE_LS="hemsirelik_3_courses_v1";
 const SESSION_KEY="hemsirelik_3_cloud_session_v1";
-const API_URL=""; // Gerçek sunucu adresi: örn. https://alanadiniz.com/api
+const API_URL="/api"; // Gerçek sunucu adresi: örn. https://alanadiniz.com/api
 let currentUser=null, marks={}, weekDate=new Date(START), selectedKey=null;
 function scoped(k){return k+"_"+(currentUser?currentUser.username:"guest")}
 function setSyncState(t){const e=document.getElementById("syncState");if(e)e.textContent="● "+t}
