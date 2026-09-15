@@ -237,7 +237,6 @@ const W = {
 ]};
 
 
-const COURSE_LS="hemsirelik_3_courses_v1";
 const DEFAULT_COURSES=[
 {id:"1",name:"Çocuk Sağlığı ve Hastalıkları Hemşireliği",type:"Teorik",room:"D1",code:"0350010068(1)",teacher:"Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK",start:"2026-09-14",end:"2027-05-28",days:["Pazartesi"],times:[["10:30","11:15"]]},
 {id:"2",name:"Pediatri",type:"Teorik",room:"",code:"PEDITR-01",teacher:"Eklenen ders",start:"2026-09-14",end:"2027-05-28",days:["Salı"],times:[["10:30","11:15"]]},
@@ -514,7 +513,7 @@ document.getElementById("courseForm").onsubmit=e=>{
 };
 document.getElementById("cancelEdit").onclick=resetCourseForm;
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.tab==="manage"){renderCourseList();if(!document.getElementById("courseStart").value)resetCourseForm()}}));
-async
+
   async function doLogin(){
  const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
  let ok=false;
