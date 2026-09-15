@@ -517,18 +517,145 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{if(
   async function doLogin(){
  const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
  let ok=false;
- if(API_URL){try{const r=await fetch(API_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});if(r.ok){const d=await r.json();currentUser={username:d.username,role:d.role,token:d.token};ok=true}}catch(e){}}
- else if(username==="HAN01"&&password==="HAN12345"){currentUser={username:"HAN01",role:"admin",token:"local-HAN01"};ok=true}
- if(!ok){err.textContent=API_URL?"Giriş başarısız veya sunucuya ulaşılamıyor.":"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";err.style.display="block";return}
- localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username;err.style.display="none";rebuildSchedule();renderWeek();renderDetail();renderSummary();renderCourseList();pullSync()
-}
-function doLogout(){currentUser=null;localStorage.removeItem(SESSION_KEY);document.getElementById("accountUser").textContent="";document.getElementById("loginBack").style.display="flex"}
-document.getElementById("loginBtn").onclick=doLogin;
-document.getElementById("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
-document.getElementById("logoutBtn").onclick=doLogout;document.getElementById("syncBtn").onclick=syncNow;
-window.addEventListener("online",()=>{if(currentUser)syncNow()});
-(function boot(){try{currentUser=JSON.parse(localStorage.getItem(SESSION_KEY)||"null")}catch(e){currentUser=null}if(currentUser){loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username}else document.getElementById("loginBack").style.display="flex"}})();
+ <script>
+async function doLogin(){
+  const username=document.getElementById("loginUser").value.trim();
+  const password=document.getElementById("loginPass").value;
+  const err=document.getElementById("loginError");
+  let ok=false;
 
+  if(API_URL){
+    try{
+      const r=await fetch(API_URL+"/login",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      if(r.ok){
+        const d=await r.json();
+
+        currentUser={
+          username:d.username,
+          role:d.role,
+          token:d.token
+        };
+
+        ok=true;
+      }
+    }catch(e){
+      console.error("Giriş hatası:",e);
+    }
+  }else{
+    if(username==="HAN01" && password==="HAN12345"){
+      currentUser={
+        username:"HAN01",
+        role:"admin",
+        token:"local-HAN01"
+      };
+
+      ok=true;
+    }
+  }
+
+  if(!ok){
+    err.textContent=API_URL
+      ?"Giriş başarısız veya sunucuya ulaşılamıyor."
+      :"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";
+
+    err.style.display="block";
+    return;
+  }
+
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify(currentUser)
+  );
+
+  loadUserState();
+
+  document.getElementById("loginBack").style.display="none";
+
+  document.getElementById("accountUser").textContent=
+    "Kullanıcı: "+currentUser.username;
+
+  err.style.display="none";
+
+  rebuildSchedule();
+  renderWeek();
+  renderDetail();
+  renderSummary();
+  renderCourseList();
+
+  pullSync();
+}
+
+
+function doLogout(){
+  currentUser=null;
+
+  localStorage.removeItem(SESSION_KEY);
+
+  document.getElementById("accountUser").textContent="";
+
+  document.getElementById("loginBack").style.display="flex";
+}
+
+
+document.getElementById("loginBtn").onclick=doLogin;
+
+document.getElementById("loginPass").addEventListener(
+  "keydown",
+  e=>{
+    if(e.key==="Enter"){
+      doLogin();
+    }
+  }
+);
+
+document.getElementById("logoutBtn").onclick=doLogout;
+
+document.getElementById("syncBtn").onclick=syncNow;
+
+window.addEventListener(
+  "online",
+  ()=>{
+    if(currentUser){
+      syncNow();
+    }
+  }
+);
+
+
+(function boot(){
+
+  try{
+    currentUser=JSON.parse(
+      localStorage.getItem(SESSION_KEY)||"null"
+    );
+  }catch(e){
+    currentUser=null;
+  }
+
+  if(currentUser){
+
+    loadUserState();
+
+    document.getElementById("loginBack").style.display="none";
+
+    document.getElementById("accountUser").textContent=
+      "Kullanıcı: "+currentUser.username;
+
+  }else{
+
+    document.getElementById("loginBack").style.display="flex";
+
+  }
+
+})();
 </script>
-</body>
-</html>
