@@ -220,6 +220,7 @@ async function pullSync(){
  try{setSyncState("Sunucudan alınıyor…");const r=await fetch(API_URL+"/sync",{headers:{"Authorization":"Bearer "+currentUser.token}});if(!r.ok)throw 0;const d=await r.json();if(d.marks)marks=d.marks;if(Array.isArray(d.courses))courses=d.courses;localSave();rebuildSchedule();renderWeek();renderDetail();renderSummary();renderCourseList();setSyncState("Senkronize ✓")}catch(e){setSyncState("Çevrimdışı / yerel kayıt")}
 }
 
+const W = {};
 
 
 const DEFAULT_COURSES=[];
