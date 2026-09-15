@@ -220,34 +220,6 @@ async function pullSync(){
  try{setSyncState("Sunucudan alınıyor…");const r=await fetch(API_URL+"/sync",{headers:{"Authorization":"Bearer "+currentUser.token}});if(!r.ok)throw 0;const d=await r.json();if(d.marks)marks=d.marks;if(Array.isArray(d.courses))courses=d.courses;localSave();rebuildSchedule();renderWeek();renderDetail();renderSummary();renderCourseList();setSyncState("Senkronize ✓")}catch(e){setSyncState("Çevrimdışı / yerel kayıt")}
 }
 
-const W = {
-"Pazartesi":[
-  ["10:30-11:15","Çocuk Sağlığı ve Hastalıkları Hemşireliği","Teorik","D1","","0350010068(1)","Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK"],
-  ["11:30-12:15","Çocuk Sağlığı ve Hastalıkları Hemşireliği","Teorik","D1","","0350010068(1)","Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK"],
-  ["13:30-14:15","Çocuk Sağlığı ve Hastalıkları Hemşireliği","Teorik","D1","","0350010068(1)","Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK"],
-  ["14:30-15:15","Çocuk Sağlığı ve Hastalıkları Hemşireliği","Teorik","D1","","0350010068(1)","Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK"],
-  ["15:30-16:15","Çocuk Sağlığı ve Hastalıkları Hemşireliği","Teorik","D1","","0350010068(1)","Dr. Öğr. Üyesi MURADİYE ALDEM BUDAK"]
-],
-"Salı":[
-  ["10:30-11:15","Pediatri","Teorik","","","PEDITR-01","Eklenen ders"]
-],
-"Çarşamba":[
-  ["10:30-11:15","Kadın Doğum Staj","Teorik","","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"]
-],
-"Perşembe":[
-  ["09:30-10:15","Doğum ve Kadın Hastalıkları Hemşireliği","Teorik","D1","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"],
-  ["10:30-11:15","Doğum ve Kadın Hastalıkları Hemşireliği","Teorik","D1","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"],
-  ["11:30-12:15","Doğum ve Kadın Hastalıkları Hemşireliği","Teorik","D1","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"],
-  ["13:30-14:15","Doğum ve Kadın Hastalıkları Hemşireliği","Teorik","D1","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"],
-  ["14:30-15:15","Doğum ve Kadın Hastalıkları Hemşireliği","Teorik","D1","","0350010059(1)","Prof.Dr. KAMİLE ALTUNTUĞ"]
-],
-"Cuma":[
-  ["08:30-09:15","Hemşirelik Tarihi ve Deontoloji","Teorik","D2","","0350010050(1)","Doç.Dr. SERPİL SU"],
-  ["09:30-10:15","Hemşirelik Tarihi ve Deontoloji","Teorik","D2","","0350010050(1)","Doç.Dr. SERPİL SU"],
-  ["10:30-11:15","Bağımlılık ve Bağımlılık ile Mücadele","Teorik","D2","","03500100232(1)","Öğr. Gör. Dr. ZEYNEP SAÇKARA"],
-  ["11:30-12:15","Bağımlılık ve Bağımlılık ile Mücadele","Teorik","D2","","03500100232(1)","Öğr. Gör. Dr. ZEYNEP SAÇKARA"],
-
-]};
 
 
 const DEFAULT_COURSES=[];
@@ -538,12 +510,76 @@ document.getElementById("usersBody").addEventListener("click",e=>{const b=e.targ
 document.getElementById("refreshUsers").onclick=loadUsers;
 
 async function doLogin(){
- const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
+ const username=document.getElementById("loginUser").value.trim();
+ const password=document.getElementById("loginPass").value;
+ const err=document.getElementById("loginError");
+
  let ok=false;
- if(API_URL){try{const r=await fetch(API_URL+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});if(r.ok){const d=await r.json();currentUser={id:d.userId,username:d.username,role:d.role,token:d.token};ok=true}}catch(e){}}
- else if(username==="HAN01"&&password==="HAN12345"){currentUser={username:"HAN01",role:"admin",token:"local-HAN01"};ok=true}
- if(!ok){err.textContent=API_URL?"Giriş başarısız veya sunucuya ulaşılamıyor.":"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";err.style.display="block";return}
- localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));loadUserState();document.getElementById("loginBack").style.display="none";document.getElementById("accountUser").textContent="Kullanıcı: "+currentUser.username;updateUserManagement();err.style.display="none";rebuildSchedule();renderWeek();renderDetail();renderSummary();renderCourseList();pullSync()
+
+ if(API_URL){
+   try{
+     const r=await fetch(API_URL+"/login",{
+       method:"POST",
+       headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({username,password})
+     });
+
+     if(r.ok){
+       const d=await r.json();
+       currentUser={
+         id:d.userId,
+         username:d.username,
+         role:d.role,
+         token:d.token
+       };
+       ok=true;
+     }
+   }catch(e){}
+ }
+ else if(username==="HAN01"&&password==="HAN12345"){
+   currentUser={
+     username:"HAN01",
+     role:"admin",
+     token:"local-HAN01"
+   };
+   ok=true;
+ }
+
+ if(!ok){
+   err.textContent=API_URL
+     ?"Giriş başarısız veya sunucuya ulaşılamıyor."
+     :"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";
+   err.style.display="block";
+   return;
+ }
+
+ localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+
+ /*
+   ÖNEMLİ:
+   Giriş yapılırken eski yerel dersleri göstermiyoruz.
+   Önce tamamen boş başlıyoruz.
+   Gerçek dersler sunucudan pullSync() ile gelecek.
+ */
+ marks={};
+ courses=[];
+
+ rebuildSchedule();
+
+ document.getElementById("loginBack").style.display="none";
+ document.getElementById("accountUser").textContent=
+   "Kullanıcı: "+currentUser.username;
+
+ updateUserManagement();
+ err.style.display="none";
+
+ renderWeek();
+ renderDetail();
+ renderSummary();
+ renderCourseList();
+
+ // Sunucudaki gerçek kullanıcı verilerini getir
+ await pullSync();
 }
 function doLogout(){currentUser=null;updateUserManagement();localStorage.removeItem(SESSION_KEY);document.getElementById("accountUser").textContent="";document.getElementById("loginBack").style.display="flex"}
 document.getElementById("loginBtn").onclick=doLogin;
