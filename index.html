@@ -512,32 +512,40 @@ document.getElementById("courseForm").onsubmit=e=>{
   saveCourses();rebuildSchedule();resetCourseForm();renderCourseList();renderWeek();renderDetail();renderSummary();
 };
 document.getElementById("cancelEdit").onclick=resetCourseForm;
-document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.tab==="manage"){renderCourseList();if(!document.getElementById("courseStart").value)resetCourseForm()}}));
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.tab==="manage"){
+    renderCourseList();
+    if(!document.getElementById("courseStart").value){
+      resetCourseForm();
+    }
+  }
+}));
 
-  async function doLogin(){
- const username=document.getElementById("loginUser").value.trim(),password=document.getElementById("loginPass").value,err=document.getElementById("loginError");
- let ok=false;
- <script>
 async function doLogin(){
+
   const username=document.getElementById("loginUser").value.trim();
   const password=document.getElementById("loginPass").value;
   const err=document.getElementById("loginError");
+
   let ok=false;
 
   if(API_URL){
+
     try{
+
       const r=await fetch(API_URL+"/login",{
         method:"POST",
         headers:{
           "Content-Type":"application/json"
         },
         body:JSON.stringify({
-          username,
-          password
+          username:username,
+          password:password
         })
       });
 
       if(r.ok){
+
         const d=await r.json();
 
         currentUser={
@@ -548,11 +556,17 @@ async function doLogin(){
 
         ok=true;
       }
+
     }catch(e){
+
       console.error("Giriş hatası:",e);
+
     }
+
   }else{
+
     if(username==="HAN01" && password==="HAN12345"){
+
       currentUser={
         username:"HAN01",
         role:"admin",
@@ -564,11 +578,13 @@ async function doLogin(){
   }
 
   if(!ok){
+
     err.textContent=API_URL
       ?"Giriş başarısız veya sunucuya ulaşılamıyor."
       :"Kullanıcı adı veya şifre hatalı. Önizleme: HAN01 / HAN12345";
 
     err.style.display="block";
+
     return;
   }
 
@@ -597,6 +613,7 @@ async function doLogin(){
 
 
 function doLogout(){
+
   currentUser=null;
 
   localStorage.removeItem(SESSION_KEY);
@@ -609,6 +626,7 @@ function doLogout(){
 
 document.getElementById("loginBtn").onclick=doLogin;
 
+
 document.getElementById("loginPass").addEventListener(
   "keydown",
   e=>{
@@ -618,28 +636,31 @@ document.getElementById("loginPass").addEventListener(
   }
 );
 
+
 document.getElementById("logoutBtn").onclick=doLogout;
 
 document.getElementById("syncBtn").onclick=syncNow;
 
-window.addEventListener(
-  "online",
-  ()=>{
-    if(currentUser){
-      syncNow();
-    }
+
+window.addEventListener("online",()=>{
+  if(currentUser){
+    syncNow();
   }
-);
+});
 
 
 (function boot(){
 
   try{
+
     currentUser=JSON.parse(
       localStorage.getItem(SESSION_KEY)||"null"
     );
+
   }catch(e){
+
     currentUser=null;
+
   }
 
   if(currentUser){
